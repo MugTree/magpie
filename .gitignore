@@ -1,0 +1,10 @@
+bin/
+tmp/
+.env
+.env.**
+.DS_Store
+__debug_*
+node_modules
+magpie.db
+magpie.db-*
+data/seed/urls.txt
