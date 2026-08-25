@@ -6,7 +6,10 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/mmcdole/gofeed"
@@ -23,6 +26,16 @@ go run ./main.go --urls=./app/db/seed/seed.csv --db=./feeds.db
 func main() {
 
 	ctx := context.Background()
+
+	mustEnv := func(key string) string {
+		val, ok := os.LookupEnv(key)
+		if !ok {
+			log.Fatalf("missing .env: %s", key)
+		}
+		return val
+	}
+
+	markdownDir := mustEnv("MARKDOWN_DIR")
 
 	// parse flags
 	filePtr := flag.String("urls", "", "the file to get the urls from - needs to be broken over lines")
@@ -56,10 +69,11 @@ func main() {
 
 		fi := db.Feed{
 			Url:                    parts[0],
-			CssSelContainer:        parts[1],
-			CssSelStart:            parts[2],
-			CssSelStop:             parts[3],
-			HtmlExtractionStrategy: parts[4],
+			FolderName:             parts[1],
+			CssSelContainer:        parts[2],
+			CssSelStart:            parts[3],
+			CssSelStop:             parts[4],
+			HtmlExtractionStrategy: parts[5],
 		}
 
 		seedData = append(seedData, fi)
@@ -87,8 +101,16 @@ func main() {
 				CssSelContainer:        d.CssSelContainer, //fi.CSSSelectorContainer},
 				CssSelStart:            d.CssSelStart,
 				CssSelStop:             d.CssSelStop,
+				FolderName:             d.FolderName,
 				HtmlExtractionStrategy: d.HtmlExtractionStrategy,
 			})
+		if err != nil {
+			shared.LogError(err)
+			return
+		}
+
+		feedDataPath := filepath.Join(markdownDir, d.FolderName)
+		err = os.MkdirAll(feedDataPath, 0755)
 		if err != nil {
 			shared.LogError(err)
 			return
@@ -98,12 +120,44 @@ func main() {
 
 		for _, v := range goFeed.Items {
 
-			counter, err := shared.AddOrIgnoreArticle(queries, ctx, v, feed)
+			article, err := shared.InsertOrIgnoreArticle(queries, ctx, v, feed)
 			if err != nil {
 				shared.LogError(err)
 			}
 
-			createdArticlesTally = createdArticlesTally + counter
+			if article.ID != 0 {
+
+				// create a file record
+
+				slug := func(s string) string {
+					s = strings.ToLower(s)
+
+					re := regexp.MustCompile(`[^a-z0-9]+`)
+					s = re.ReplaceAllString(s, "-")
+
+					return strings.Trim(s, "-")
+				}
+
+				fileName := article.DateFound.Format("2006-01-02") + "-" + slug(article.Title)
+
+				f, err := os.Create(filepath.Join(feedDataPath, fileName))
+				if err != nil {
+					shared.LogError(err)
+					return
+				}
+
+				_, err = f.Write([]byte(article.ArticleContent))
+				if err != nil {
+					shared.LogError(err)
+					return
+				}
+				f.Close()
+
+				createdArticlesTally = createdArticlesTally + 1
+			}
+
+			// use the article here to create markdown in the folders
+
 		}
 
 		_, err = queries.InsertScraperRan(

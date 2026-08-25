@@ -13,7 +13,7 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func AddFeedUpdates(queries *db.Queries, ctx context.Context) (int64, error) {
+func InsertFeedUpdates(queries *db.Queries, ctx context.Context) (int64, error) {
 
 	feeds, err := queries.SelectAllFeeds(ctx)
 	if err != nil {
@@ -41,12 +41,15 @@ func AddFeedUpdates(queries *db.Queries, ctx context.Context) (int64, error) {
 
 		for _, v := range goFeed.Items {
 
-			count, err := AddOrIgnoreArticle(queries, ctx, v, feed)
+			article, err := InsertOrIgnoreArticle(queries, ctx, v, feed)
 			if err != nil {
 				LogError(err)
 			}
 
-			createdArticlesTally = createdArticlesTally + count
+			if article.ID != 0 {
+				createdArticlesTally = createdArticlesTally + 1
+			}
+
 		}
 	}
 
@@ -58,7 +61,9 @@ func AddFeedUpdates(queries *db.Queries, ctx context.Context) (int64, error) {
 	return int64(createdArticlesTally), nil
 }
 
-func AddOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofeed.Item, feed db.Feed) (int, error) {
+func InsertOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofeed.Item, feed db.Feed) (db.Article, error) {
+
+	var article db.Article
 
 	publishedDate := feedItemDate(item)
 	dateFound := time.Now()
@@ -88,12 +93,12 @@ func AddOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofeed.I
 		ClipEndPoint:   feed.CssSelStop,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("error getting site html: %v", err)
+		return article, fmt.Errorf("error getting site html: %v", err)
 	}
 
 	processed, err := ProcessScrapedHTML(html)
 	if err != nil {
-		return 0, fmt.Errorf("error running ProcessScrapedHTML: %v", err)
+		return article, fmt.Errorf("error running ProcessScrapedHTML: %v", err)
 	}
 
 	err = queries.InsertOrIgnoreArticle(ctx, db.InsertOrIgnoreArticleParams{
@@ -107,10 +112,10 @@ func AddOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofeed.I
 		ArticleContent: processed,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("error inserting article: %v", err)
+		return article, fmt.Errorf("error inserting article: %v", err)
 	}
 
-	_, err = queries.SelectArticleByFeedIDAndLink(ctx,
+	newArticle, err := queries.SelectArticleByFeedIDAndLink(ctx,
 		db.SelectArticleByFeedIDAndLinkParams{
 			FeedID: feed.ID,
 			Link:   item.Link,
@@ -118,12 +123,12 @@ func AddOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofeed.I
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, nil
+			return article, nil
 		}
-		return 0, fmt.Errorf("error selecting article: %v", err)
+		return article, fmt.Errorf("error selecting article: %v", err)
 	}
 
-	return 1, nil
+	return newArticle, nil
 
 }
 

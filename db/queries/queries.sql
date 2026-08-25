@@ -32,7 +32,8 @@ SELECT * FROM articles WHERE feed_id = ? AND link = ?;
 	css_sel_start,
 	css_sel_stop,
 	html_extraction_strategy,
-	last_fetched
+	last_fetched,
+	folder_name
 ) VALUES (
 	?, 
 	?, 
@@ -40,7 +41,8 @@ SELECT * FROM articles WHERE feed_id = ? AND link = ?;
 	?, 
 	?, 
 	?, 
-	CURRENT_TIMESTAMP
+	CURRENT_TIMESTAMP,
+	?
 ) RETURNING *;
 
 -- name: SelectAllFeeds :many

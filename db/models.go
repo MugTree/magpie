@@ -24,6 +24,7 @@ type Feed struct {
 	ID                     int64
 	Url                    string
 	Title                  string
+	FolderName             string
 	LastFetched            time.Time
 	CssSelContainer        string
 	CssSelStart            string

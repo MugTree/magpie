@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS feeds
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     url          TEXT NOT NULL UNIQUE,
     title        TEXT NOT NULL DEFAULT '',
+    folder_name        TEXT NOT NULL DEFAULT '',
     last_fetched DATETIME NOT NULL,
     css_sel_container TEXT NOT NULL DEFAULT '',
     css_sel_start  TEXT NOT NULL DEFAULT '',

@@ -18,7 +18,8 @@ const insertFeed = `-- name: InsertFeed :one
 	css_sel_start,
 	css_sel_stop,
 	html_extraction_strategy,
-	last_fetched
+	last_fetched,
+	folder_name
 ) VALUES (
 	?, 
 	?, 
@@ -26,8 +27,9 @@ const insertFeed = `-- name: InsertFeed :one
 	?, 
 	?, 
 	?, 
-	CURRENT_TIMESTAMP
-) RETURNING id, url, title, last_fetched, css_sel_container, css_sel_start, css_sel_stop, html_extraction_strategy
+	CURRENT_TIMESTAMP,
+	?
+) RETURNING id, url, title, folder_name, last_fetched, css_sel_container, css_sel_start, css_sel_stop, html_extraction_strategy
 `
 
 type InsertFeedParams struct {
@@ -37,6 +39,7 @@ type InsertFeedParams struct {
 	CssSelStart            string
 	CssSelStop             string
 	HtmlExtractionStrategy string
+	FolderName             string
 }
 
 func (q *Queries) InsertFeed(ctx context.Context, arg InsertFeedParams) (Feed, error) {
@@ -47,12 +50,14 @@ func (q *Queries) InsertFeed(ctx context.Context, arg InsertFeedParams) (Feed, e
 		arg.CssSelStart,
 		arg.CssSelStop,
 		arg.HtmlExtractionStrategy,
+		arg.FolderName,
 	)
 	var i Feed
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
 		&i.Title,
+		&i.FolderName,
 		&i.LastFetched,
 		&i.CssSelContainer,
 		&i.CssSelStart,
@@ -81,7 +86,7 @@ INSERT OR IGNORE INTO articles (
 	 ?, 
 	 ?, 
 	 ?
- ) RETURNING id, feed_id, title, link, published, date_found, article_content, scraped_html, summary
+ )
 `
 
 type InsertOrIgnoreArticleParams struct {
@@ -139,7 +144,7 @@ func (q *Queries) InsertScraperRan(ctx context.Context, arg InsertScraperRanPara
 }
 
 const selectAllFeeds = `-- name: SelectAllFeeds :many
-SELECT id, url, title, last_fetched, css_sel_container, css_sel_start, css_sel_stop, html_extraction_strategy from feeds
+SELECT id, url, title, folder_name, last_fetched, css_sel_container, css_sel_start, css_sel_stop, html_extraction_strategy from feeds
 `
 
 func (q *Queries) SelectAllFeeds(ctx context.Context) ([]Feed, error) {
@@ -155,6 +160,7 @@ func (q *Queries) SelectAllFeeds(ctx context.Context) ([]Feed, error) {
 			&i.ID,
 			&i.Url,
 			&i.Title,
+			&i.FolderName,
 			&i.LastFetched,
 			&i.CssSelContainer,
 			&i.CssSelStart,

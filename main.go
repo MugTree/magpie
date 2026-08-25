@@ -34,7 +34,7 @@ func main() {
 
 	queries := db.New(sqlDB)
 
-	newArticles, err := shared.AddFeedUpdates(queries, ctx)
+	newArticles, err := shared.InsertFeedUpdates(queries, ctx)
 	if err != nil {
 		shared.LogError(err)
 		return
