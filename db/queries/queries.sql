@@ -1,23 +1,4 @@
--- name: InsertArticle :one
-INSERT INTO articles (
-	feed_id, 
-	title, 
-	link, 
-	published, 
-	date_found, 
-	summary,
-	scraped_html,
-	article_content
-) VALUES (
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?,
-	 ?
- ) RETURNING * ;
+
 
 -- name: InsertOrIgnoreArticle :exec
 INSERT OR IGNORE INTO articles (
@@ -40,6 +21,8 @@ INSERT OR IGNORE INTO articles (
 	 ?
  );
 
+-- name: SelectArticleByFeedIDAndLink :one
+SELECT * FROM articles WHERE feed_id = ? AND link = ?;
 
 -- name: InsertFeed :one
  INSERT INTO feeds (

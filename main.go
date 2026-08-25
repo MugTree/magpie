@@ -26,40 +26,35 @@ func main() {
 
 	appDb := mustEnv("APP_DB")
 
-	/* the idea here is that you simply run the app and id downloads the latest feed entries and adds the feeds to the database */
-
 	sqlDB, err := sql.Open("sqlite3", appDb)
 	if err != nil {
-		fmt.Printf("error opening the db: %v", err)
+		shared.LogError(err)
 		return
 	}
 
 	queries := db.New(sqlDB)
 
-	// go to the web and get the feed contents (articles / urls)
-	// add the new ones to the database (new is based upon a unique key: feedID and link)
-	// typically this would be run once a day
-
-	articlesCreated, err := shared.GetFeedUpdates(queries, ctx)
+	newArticles, err := shared.GetFeedUpdates(queries, ctx)
 	if err != nil {
-		fmt.Printf("error running GetFeedUpdates: %v", err)
+		shared.LogError(err)
 		return
 	}
 
-	fmt.Printf("articles created: %v", articlesCreated)
+	fmt.Printf("articles created: %v", newArticles)
 
-	_, err = queries.InsertScraperRan(ctx, db.InsertScraperRanParams{RunType: "daily", ArticlesCreated: articlesCreated})
+	_, err = queries.InsertScraperRan(ctx,
+		db.InsertScraperRanParams{
+			RunType:         "daily",
+			ArticlesCreated: newArticles,
+		})
 	if err != nil {
-		fmt.Println(err)
+		shared.LogError(err)
 		return
 	}
 
 	// it would copy a markdowified version of the article over to another directory
-
 	// when a copy is made this program must not be able to copy again
-
 	// within the copy routine - we need tp have a way to say if a path exists DO NOT OVERWRITE
-
 	// that should be expressed in code and not just be a has been copied flag in the db. Assumption is that everything is always copied
 
 }

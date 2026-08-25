@@ -6,10 +6,8 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/mmcdole/gofeed"
 
@@ -24,130 +22,90 @@ go run ./main.go --urls=./app/db/seed/seed.csv --db=./feeds.db
 */
 func main() {
 
+	ctx := context.Background()
+
+	// parse flags
 	filePtr := flag.String("urls", "", "the file to get the urls from - needs to be broken over lines")
 	dbPtr := flag.String("db", "", "path to the db")
-
-	// this is the first run we want another run that just does updates
 
 	flag.Parse()
 	fmt.Println("urls:", *filePtr)
 
+	// open db
+	dbhandle, err := sql.Open("sqlite3", *dbPtr)
+	if err != nil {
+		shared.LogError(err)
+		return
+	}
+	defer dbhandle.Close()
+	queries := db.New(dbhandle)
+
+	// read data from csv to use in program
 	f, err := os.Open(*filePtr)
 	if err != nil {
-		log.Fatal(err)
+		shared.LogError(err)
+		return
 	}
 	defer f.Close()
 
-	feeds := []shared.Feed{}
+	seedData := []db.Feed{}
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		parts := strings.Split(scanner.Text(), ",")
 
-		fi := shared.Feed{
+		fi := db.Feed{
 			Url:                    parts[0],
-			CSSSelectorContainer:   parts[1],
-			CSSSelectorStart:       parts[2],
-			CSSSelectorStop:        parts[3],
-			HTMLExtractionStrategy: parts[4],
+			CssSelContainer:        parts[1],
+			CssSelStart:            parts[2],
+			CssSelStop:             parts[3],
+			HtmlExtractionStrategy: parts[4],
 		}
 
-		feeds = append(feeds, fi)
+		seedData = append(seedData, fi)
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		shared.LogError(err)
+		return
 	}
 
-	dbhandle, err := sql.Open("sqlite3", *dbPtr)
-	if err != nil {
-		log.Fatalf("failed to open database: %v", err)
-	}
-	defer dbhandle.Close()
+	parser := gofeed.NewParser()
 
-	queries := db.New(dbhandle)
+	for _, sd := range seedData {
 
-	p := gofeed.NewParser()
-
-	ctx := context.Background()
-
-	for _, fi := range feeds {
-
-		goFeed, err := p.ParseURL(fi.Url)
+		goFeed, err := parser.ParseURL(sd.Url)
 		if err != nil {
-			log.Fatalf("error parsing: %v", err)
+			shared.LogError(err)
+			return
 		}
 
 		insertedFeed, err := queries.InsertFeed(ctx, db.InsertFeedParams{
 			Url:                    goFeed.Link,
 			Title:                  goFeed.Title,
-			CssSelContainer:        fi.CSSSelectorContainer, //fi.CSSSelectorContainer},
-			CssSelStart:            fi.CSSSelectorStart,
-			CssSelStop:             fi.CSSSelectorStop,
-			HtmlExtractionStrategy: fi.HTMLExtractionStrategy,
+			CssSelContainer:        sd.CssSelContainer, //fi.CSSSelectorContainer},
+			CssSelStart:            sd.CssSelStart,
+			CssSelStop:             sd.CssSelStop,
+			HtmlExtractionStrategy: sd.HtmlExtractionStrategy,
 		})
-
 		if err != nil {
-			log.Fatalf("error opening the db: %v", err)
+			shared.LogError(err)
+			return
 		}
 
-		createdArticlesCount := 0
+		var createdArticlesCount = 0
 
 		for _, v := range goFeed.Items {
 
-			publishedDate := feedItemDate(v)
-			dateFound := time.Now()
-
-			fmt.Println("getting link: ", v.Link)
-			html, err := shared.ScrapeSiteHTML(shared.PageScrapeParams{
-				Link:           v.Link,
-				Container:      insertedFeed.CssSelContainer,
-				ClipStartPoint: insertedFeed.CssSelStart,
-				ClipEndPoint:   insertedFeed.CssSelStop,
-			})
+			count, err := shared.AddOrIgnoreArticle(queries, ctx, v, insertedFeed)
 			if err != nil {
-				log.Fatalf("error getting site html: %v", err)
+				shared.LogError(err)
 			}
 
-			fmt.Println("processing html for: ", v.Link)
-			processed, err := shared.ProcessScrapedHTML(html)
-			if err != nil {
-				log.Fatalf("error getting site html: %v", err)
-			}
-
-			fmt.Println("inserting record for: ", v.Link)
-			_, err = queries.InsertArticle(ctx, db.InsertArticleParams{
-				FeedID:         insertedFeed.ID,
-				Title:          v.Title,
-				Link:           v.Link,
-				Published:      publishedDate,
-				DateFound:      &dateFound,
-				Summary:        v.Description,
-				ScrapedHtml:    html,
-				ArticleContent: processed,
-			})
-
-			if err != nil {
-				log.Fatalf("error inserting article: %v", err)
-			}
-
-			createdArticlesCount++
-
+			createdArticlesCount = createdArticlesCount + count
 		}
 
 		_, err = queries.InsertScraperRan(ctx, db.InsertScraperRanParams{RunType: "seed", ArticlesCreated: int64(createdArticlesCount)})
 
 	}
-}
-
-func feedItemDate(item *gofeed.Item) *time.Time {
-	if item.PublishedParsed != nil {
-		return item.PublishedParsed
-	}
-
-	if item.UpdatedParsed != nil {
-		return item.UpdatedParsed
-	}
-
-	return nil
 }

@@ -10,65 +10,6 @@ import (
 	"time"
 )
 
-const insertArticle = `-- name: InsertArticle :one
-INSERT INTO articles (
-	feed_id, 
-	title, 
-	link, 
-	published, 
-	date_found, 
-	summary,
-	scraped_html,
-	article_content
-) VALUES (
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?, 
-	 ?,
-	 ?
- ) RETURNING id, feed_id, title, link, published, date_found, article_content, scraped_html, summary
-`
-
-type InsertArticleParams struct {
-	FeedID         int64
-	Title          string
-	Link           string
-	Published      *time.Time
-	DateFound      *time.Time
-	Summary        string
-	ScrapedHtml    string
-	ArticleContent string
-}
-
-func (q *Queries) InsertArticle(ctx context.Context, arg InsertArticleParams) (Article, error) {
-	row := q.db.QueryRowContext(ctx, insertArticle,
-		arg.FeedID,
-		arg.Title,
-		arg.Link,
-		arg.Published,
-		arg.DateFound,
-		arg.Summary,
-		arg.ScrapedHtml,
-		arg.ArticleContent,
-	)
-	var i Article
-	err := row.Scan(
-		&i.ID,
-		&i.FeedID,
-		&i.Title,
-		&i.Link,
-		&i.Published,
-		&i.DateFound,
-		&i.ArticleContent,
-		&i.ScrapedHtml,
-		&i.Summary,
-	)
-	return i, err
-}
-
 const insertFeed = `-- name: InsertFeed :one
  INSERT INTO feeds (
 	url, 
@@ -122,8 +63,6 @@ func (q *Queries) InsertFeed(ctx context.Context, arg InsertFeedParams) (Feed, e
 }
 
 const insertOrIgnoreArticle = `-- name: InsertOrIgnoreArticle :exec
-;
-
 INSERT OR IGNORE INTO articles (
 	feed_id, 
 	title, 
@@ -142,7 +81,7 @@ INSERT OR IGNORE INTO articles (
 	 ?, 
 	 ?, 
 	 ?
- )
+ ) RETURNING id, feed_id, title, link, published, date_found, article_content, scraped_html, summary
 `
 
 type InsertOrIgnoreArticleParams struct {
@@ -233,4 +172,30 @@ func (q *Queries) SelectAllFeeds(ctx context.Context) ([]Feed, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const selectArticleByFeedIDAndLink = `-- name: SelectArticleByFeedIDAndLink :one
+SELECT id, feed_id, title, link, published, date_found, article_content, scraped_html, summary FROM articles WHERE feed_id = ? AND link = ?
+`
+
+type SelectArticleByFeedIDAndLinkParams struct {
+	FeedID int64
+	Link   string
+}
+
+func (q *Queries) SelectArticleByFeedIDAndLink(ctx context.Context, arg SelectArticleByFeedIDAndLinkParams) (Article, error) {
+	row := q.db.QueryRowContext(ctx, selectArticleByFeedIDAndLink, arg.FeedID, arg.Link)
+	var i Article
+	err := row.Scan(
+		&i.ID,
+		&i.FeedID,
+		&i.Title,
+		&i.Link,
+		&i.Published,
+		&i.DateFound,
+		&i.ArticleContent,
+		&i.ScrapedHtml,
+		&i.Summary,
+	)
+	return i, err
 }
