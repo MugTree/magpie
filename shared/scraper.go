@@ -5,6 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/mugtree/magpie/db"
@@ -129,6 +133,36 @@ func InsertOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofee
 	}
 
 	return newArticle, nil
+
+}
+
+func CreateMarkdown(article db.Article, markdownPath string) error {
+
+	slug := func(s string) string {
+		s = strings.ToLower(s)
+
+		re := regexp.MustCompile(`[^a-z0-9]+`)
+		s = re.ReplaceAllString(s, "-")
+
+		return strings.Trim(s, "-")
+	}
+
+	fileName := article.DateFound.Format("2006-01-02") + "-" + slug(article.Title)
+
+	f, err := os.Create(filepath.Join(markdownPath, fileName))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.Write([]byte(article.ArticleContent))
+
+	if err != nil {
+		LogError(err)
+		return err
+	}
+
+	return nil
 
 }
 

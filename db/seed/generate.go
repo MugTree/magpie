@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/mmcdole/gofeed"
@@ -109,8 +108,8 @@ func main() {
 			return
 		}
 
-		feedDataPath := filepath.Join(markdownDir, d.FolderName)
-		err = os.MkdirAll(feedDataPath, 0755)
+		markdownPath := filepath.Join(markdownDir, d.FolderName)
+		err = os.MkdirAll(markdownPath, 0755)
 		if err != nil {
 			shared.LogError(err)
 			return
@@ -127,36 +126,14 @@ func main() {
 
 			if article.ID != 0 {
 
-				// create a file record
-
-				slug := func(s string) string {
-					s = strings.ToLower(s)
-
-					re := regexp.MustCompile(`[^a-z0-9]+`)
-					s = re.ReplaceAllString(s, "-")
-
-					return strings.Trim(s, "-")
-				}
-
-				fileName := article.DateFound.Format("2006-01-02") + "-" + slug(article.Title)
-
-				f, err := os.Create(filepath.Join(feedDataPath, fileName))
+				err := shared.CreateMarkdown(article, markdownPath)
 				if err != nil {
 					shared.LogError(err)
 					return
 				}
-
-				_, err = f.Write([]byte(article.ArticleContent))
-				if err != nil {
-					shared.LogError(err)
-					return
-				}
-				f.Close()
 
 				createdArticlesTally = createdArticlesTally + 1
 			}
-
-			// use the article here to create markdown in the folders
 
 		}
 
