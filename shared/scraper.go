@@ -13,7 +13,7 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func GetFeedUpdates(queries *db.Queries, ctx context.Context) (int64, error) {
+func AddFeedUpdates(queries *db.Queries, ctx context.Context) (int64, error) {
 
 	feeds, err := queries.SelectAllFeeds(ctx)
 	if err != nil {
@@ -110,7 +110,12 @@ func AddOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofeed.I
 		return 0, fmt.Errorf("error inserting article: %v", err)
 	}
 
-	_, err = queries.SelectArticleByFeedIDAndLink(ctx, db.SelectArticleByFeedIDAndLinkParams{FeedID: feed.ID, Link: item.Link})
+	_, err = queries.SelectArticleByFeedIDAndLink(ctx,
+		db.SelectArticleByFeedIDAndLinkParams{
+			FeedID: feed.ID,
+			Link:   item.Link,
+		})
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, nil

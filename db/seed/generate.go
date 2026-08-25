@@ -72,40 +72,46 @@ func main() {
 
 	parser := gofeed.NewParser()
 
-	for _, sd := range seedData {
+	for _, d := range seedData {
 
-		goFeed, err := parser.ParseURL(sd.Url)
+		goFeed, err := parser.ParseURL(d.Url)
 		if err != nil {
 			shared.LogError(err)
 			return
 		}
 
-		insertedFeed, err := queries.InsertFeed(ctx, db.InsertFeedParams{
-			Url:                    goFeed.Link,
-			Title:                  goFeed.Title,
-			CssSelContainer:        sd.CssSelContainer, //fi.CSSSelectorContainer},
-			CssSelStart:            sd.CssSelStart,
-			CssSelStop:             sd.CssSelStop,
-			HtmlExtractionStrategy: sd.HtmlExtractionStrategy,
-		})
+		feed, err := queries.InsertFeed(ctx,
+			db.InsertFeedParams{
+				Url:                    goFeed.Link,
+				Title:                  goFeed.Title,
+				CssSelContainer:        d.CssSelContainer, //fi.CSSSelectorContainer},
+				CssSelStart:            d.CssSelStart,
+				CssSelStop:             d.CssSelStop,
+				HtmlExtractionStrategy: d.HtmlExtractionStrategy,
+			})
 		if err != nil {
 			shared.LogError(err)
 			return
 		}
 
-		var createdArticlesCount = 0
+		var createdArticlesTally = 0
 
 		for _, v := range goFeed.Items {
 
-			count, err := shared.AddOrIgnoreArticle(queries, ctx, v, insertedFeed)
+			counter, err := shared.AddOrIgnoreArticle(queries, ctx, v, feed)
 			if err != nil {
 				shared.LogError(err)
 			}
 
-			createdArticlesCount = createdArticlesCount + count
+			createdArticlesTally = createdArticlesTally + counter
 		}
 
-		_, err = queries.InsertScraperRan(ctx, db.InsertScraperRanParams{RunType: "seed", ArticlesCreated: int64(createdArticlesCount)})
+		_, err = queries.InsertScraperRan(
+			ctx,
+			db.InsertScraperRanParams{
+				RunType:         "seed",
+				ArticlesCreated: int64(createdArticlesTally)},
+		)
 
 	}
 }
