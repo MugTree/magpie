@@ -130,11 +130,15 @@ INSERT OR IGNORE INTO articles (
 	link, 
 	published, 
 	date_found,
-	summary 
+	summary,
+	scraped_html,
+	article_content 
 ) VALUES (
 	 ?, 
 	 ?, 
+	 ?, 
 	 ?,
+	 ?, 
 	 ?, 
 	 ?, 
 	 ?
@@ -142,12 +146,14 @@ INSERT OR IGNORE INTO articles (
 `
 
 type InsertOrIgnoreArticleParams struct {
-	FeedID    int64
-	Title     string
-	Link      string
-	Published *time.Time
-	DateFound *time.Time
-	Summary   string
+	FeedID         int64
+	Title          string
+	Link           string
+	Published      *time.Time
+	DateFound      *time.Time
+	Summary        string
+	ScrapedHtml    string
+	ArticleContent string
 }
 
 func (q *Queries) InsertOrIgnoreArticle(ctx context.Context, arg InsertOrIgnoreArticleParams) error {
@@ -158,8 +164,39 @@ func (q *Queries) InsertOrIgnoreArticle(ctx context.Context, arg InsertOrIgnoreA
 		arg.Published,
 		arg.DateFound,
 		arg.Summary,
+		arg.ScrapedHtml,
+		arg.ArticleContent,
 	)
 	return err
+}
+
+const insertScraperRan = `-- name: InsertScraperRan :one
+INSERT INTO log (
+	articles_created, 
+	run_type,
+	time_ran
+) VALUES (
+	?,
+	?, 
+	CURRENT_TIMESTAMP
+) RETURNING id, time_ran, run_type, articles_created
+`
+
+type InsertScraperRanParams struct {
+	ArticlesCreated int64
+	RunType         string
+}
+
+func (q *Queries) InsertScraperRan(ctx context.Context, arg InsertScraperRanParams) (Log, error) {
+	row := q.db.QueryRowContext(ctx, insertScraperRan, arg.ArticlesCreated, arg.RunType)
+	var i Log
+	err := row.Scan(
+		&i.ID,
+		&i.TimeRan,
+		&i.RunType,
+		&i.ArticlesCreated,
+	)
+	return i, err
 }
 
 const selectAllFeeds = `-- name: SelectAllFeeds :many

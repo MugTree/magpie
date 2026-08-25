@@ -1,5 +1,5 @@
 seed-db:
-	go run ./main.go --urls=./db/seed/seed.csv --db=./magpie.db
+	go run ./db/seed/generate.go --urls=./db/seed/seed.csv --db=./magpie.db
 
 drop-db:
 	rm magpie.db

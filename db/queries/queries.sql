@@ -26,11 +26,15 @@ INSERT OR IGNORE INTO articles (
 	link, 
 	published, 
 	date_found,
-	summary 
+	summary,
+	scraped_html,
+	article_content 
 ) VALUES (
 	 ?, 
 	 ?, 
+	 ?, 
 	 ?,
+	 ?, 
 	 ?, 
 	 ?, 
 	 ?
@@ -57,4 +61,15 @@ INSERT OR IGNORE INTO articles (
 ) RETURNING *;
 
 -- name: SelectAllFeeds :many
-SELECT * from feeds;	
+SELECT * from feeds;
+
+-- name: InsertScraperRan :one
+INSERT INTO log (
+	articles_created, 
+	run_type,
+	time_ran
+) VALUES (
+	?,
+	?, 
+	CURRENT_TIMESTAMP
+) RETURNING *;

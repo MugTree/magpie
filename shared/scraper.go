@@ -1,4 +1,4 @@
-package scraper
+package shared
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"magpie/db"
+	"github.com/mugtree/magpie/db"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
@@ -15,8 +15,12 @@ import (
 	"golang.org/x/net/html"
 )
 
-func main() {
-
+type Feed struct {
+	Url                    string
+	CSSSelectorContainer   string
+	CSSSelectorStart       string
+	CSSSelectorStop        string
+	HTMLExtractionStrategy string
 }
 
 type PageScrapeParams struct {
@@ -330,25 +334,44 @@ func GetFeedUpdates(queries *db.Queries, ctx context.Context) (int64, error) {
 
 			now := time.Now()
 
-			doc, err := html.Parse(strings.NewReader(item.Description))
+			description, err := html.Parse(strings.NewReader(item.Description))
 			if err != nil {
 				return 0, err
 			}
 
-			_feedsSanitizeHTMLInput(doc)
+			_feedsSanitizeHTMLInput(description)
 
-			output, err := StringifyHTML(doc)
+			summary, err := StringifyHTML(description)
+			if err != nil {
+				return 0, err
+			}
+
+			fmt.Println("getting link: ", item.Link)
+			html, err := ScrapeSiteHTML(PageScrapeParams{
+				Link:           feed.Url,
+				Container:      feed.CssSelContainer,
+				ClipStartPoint: feed.CssSelStart,
+				ClipEndPoint:   feed.CssSelStop,
+			})
+			if err != nil {
+				return 0, err
+			}
+
+			fmt.Println("processing html for: ", item.Link)
+			processed, err := ProcessScrapedHTML(html)
 			if err != nil {
 				return 0, err
 			}
 
 			err = queries.InsertOrIgnoreArticle(ctx, db.InsertOrIgnoreArticleParams{
-				FeedID:    feed.ID,
-				Title:     item.Title,
-				Link:      item.Link,
-				Published: feedsGetFeedItemDate(item),
-				DateFound: &now,
-				Summary:   output,
+				FeedID:         feed.ID,
+				Title:          item.Title,
+				Link:           item.Link,
+				Published:      feedsGetFeedItemDate(item),
+				ScrapedHtml:    html,
+				ArticleContent: processed,
+				DateFound:      &now,
+				Summary:        summary,
 			})
 			if err != nil {
 				return 0, fmt.Errorf("insert article: %w", err)

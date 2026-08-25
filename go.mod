@@ -1,4 +1,4 @@
-module magpie
+module github.com/mugtree/magpie 
 
 go 1.25.0
 
