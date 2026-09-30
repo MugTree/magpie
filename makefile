@@ -1,7 +1,7 @@
 drop-data:
 	rm magpie.db
 	rm magpie.db-*
-	rm ./markdown/*
+	rm ./annotations/*
 
 seed-data:
 	touch magpie.db

@@ -8,4 +8,4 @@ node_modules
 magpie.db
 magpie.db-*
 data/seed/urls.txt
-markdown
+annotations

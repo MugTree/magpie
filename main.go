@@ -25,6 +25,7 @@ func main() {
 	}
 
 	appDb := mustEnv("APP_DB")
+	markdownPath := mustEnv("MARKDOWN_DIR")
 
 	sqlDB, err := sql.Open("sqlite3", appDb)
 	if err != nil {
@@ -34,7 +35,7 @@ func main() {
 
 	queries := db.New(sqlDB)
 
-	newArticles, err := shared.InsertFeedUpdates(queries, ctx)
+	newArticles, err := shared.InsertFeedUpdates(queries, ctx, markdownPath)
 	if err != nil {
 		shared.LogError(err)
 		return

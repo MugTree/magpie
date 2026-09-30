@@ -126,7 +126,7 @@ func main() {
 
 			if article.ID != 0 {
 
-				err := shared.CreateMarkdown(article, markdownPath)
+				err := shared.CreateMarkdown(article, feed, markdownPath)
 				if err != nil {
 					shared.LogError(err)
 					return
