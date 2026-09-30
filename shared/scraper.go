@@ -115,6 +115,8 @@ func InsertOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofee
 		return article, fmt.Errorf("error running ProcessScrapedHTML: %v", err)
 	}
 
+	// create the markdown here ...
+
 	err = queries.InsertOrIgnoreArticle(ctx, db.InsertOrIgnoreArticleParams{
 		FeedID:         feed.ID,
 		Title:          item.Title,
