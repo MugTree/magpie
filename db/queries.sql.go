@@ -229,8 +229,8 @@ func (q *Queries) SelectArticleByID(ctx context.Context, id int64) (Article, err
 	return i, err
 }
 
-const updateArticleByID = `-- name: UpdateArticleByID :exec
-UPDATE articles SET markdown = ? WHERE id = ?
+const updateArticleByID = `-- name: UpdateArticleByID :one
+UPDATE articles SET markdown = ? WHERE id = ? RETURNING id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary
 `
 
 type UpdateArticleByIDParams struct {
@@ -238,7 +238,20 @@ type UpdateArticleByIDParams struct {
 	ID       int64
 }
 
-func (q *Queries) UpdateArticleByID(ctx context.Context, arg UpdateArticleByIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateArticleByID, arg.Markdown, arg.ID)
-	return err
+func (q *Queries) UpdateArticleByID(ctx context.Context, arg UpdateArticleByIDParams) (Article, error) {
+	row := q.db.QueryRowContext(ctx, updateArticleByID, arg.Markdown, arg.ID)
+	var i Article
+	err := row.Scan(
+		&i.ID,
+		&i.FeedID,
+		&i.Title,
+		&i.Link,
+		&i.Published,
+		&i.DateFound,
+		&i.ScrapedHtml,
+		&i.Markdown,
+		&i.FormattedHtml,
+		&i.Summary,
+	)
+	return i, err
 }

@@ -10,7 +10,9 @@ require (
 )
 
 require (
+	github.com/CAFxX/httpcompression v0.0.9 // indirect
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
+	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/antchfx/htmlquery v1.3.4 // indirect
 	github.com/antchfx/xmlquery v1.4.4 // indirect
@@ -22,14 +24,15 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/mmcdole/goxpp v1.1.1-0.20240225020742-a0c311522b23 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nlnwa/whatwg-url v0.6.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
@@ -38,7 +41,10 @@ require (
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
 	github.com/go-chi/chi/v5 v5.3.2
+	github.com/goforj/godump v1.9.1
 	github.com/russross/blackfriday/v2 v2.1.0
+	github.com/starfederation/datastar-go v1.2.2
 	golang.org/x/net v0.58.0
 	maragu.dev/gomponents v1.3.0
+	maragu.dev/gomponents-datastar v0.4.0
 )

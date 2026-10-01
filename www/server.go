@@ -1,10 +1,8 @@
 package www
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
-	"io"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -25,7 +23,7 @@ func SetupHTTPServer(queries *db.Queries, user string, password string) chi.Rout
 	return getRouter(queries)
 }
 
-func httpNeuterDirectory(next http.Handler) http.Handler {
+func _httpNeuterDirectory(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/") {
 			http.NotFound(w, r)
@@ -36,104 +34,54 @@ func httpNeuterDirectory(next http.Handler) http.Handler {
 	})
 }
 
-func httpDebugRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		httpDumpRequest(r, false, false)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func httpDumpRequest(r *http.Request, readHeaders bool, readJsonBody bool) {
-
-	fmt.Printf("\n=== %s %s ===\n", r.Method, r.URL)
-
-	routeCtx := chi.RouteContext(r.Context())
-	if routeCtx != nil {
-		fmt.Println("Path params:")
-		for i, key := range routeCtx.URLParams.Keys {
-			fmt.Printf("  %s = %s\n", key, routeCtx.URLParams.Values[i])
-		}
-	}
-
-	fmt.Println("Query params:")
-	for key, values := range r.URL.Query() {
-		fmt.Printf("  %s = %v\n", key, values)
-	}
-
-	if err := r.ParseForm(); err == nil {
-		fmt.Println("Form values:")
-		for key, values := range r.PostForm {
-			fmt.Printf("  %s = %v\n", key, values)
-		}
-	}
-
-	if readHeaders {
-		fmt.Println("Headers:")
-		for key, values := range r.Header {
-			fmt.Printf("  %s = %v\n", key, values)
-		}
-	}
-
-	if readJsonBody {
-		fmt.Println("JSON body:")
-		body, _ := io.ReadAll(r.Body)
-		fmt.Println(string(body))
-		r.Body = io.NopCloser(bytes.NewBuffer(body))
-	}
-
-}
-
-func httpRequireNonZeroInt64(value string, key string, w http.ResponseWriter, r *http.Request) (int64, bool) {
-	v, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
-		return 0, false
-	}
-
-	if v == 0 {
-		httpLogAndError(
-			w,
-			r,
-			fmt.Sprintf("key '%s' must be a non-zero integer", key),
-			http.StatusBadRequest,
-		)
-		return 0, false
-	}
-
-	return v, true
-}
-
-func httpRequireInt64Param(value string, w http.ResponseWriter, r *http.Request) (int64, bool) {
-	v, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
-		return 0, false
-	}
-
-	return v, true
-}
-
-func httpRequireIDParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
-	return httpRequireNonZeroInt64(chi.URLParam(r, key), key, w, r)
-}
-
-func httpRequireNumericParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
-	return httpRequireInt64Param(chi.URLParam(r, key), w, r)
-}
-
-// func requirePageType(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
-// 	pt := r.PathValue(key)
-
-// 	switch pt {
-// 	case PageTypeFeed, PageTypeHome, PageTypeArticle:
-// 		return pt, true
-// 	default:
-// 		logAndError(w, r, fmt.Errorf("invalid page type: %s", pt).Error())
-// 		return "", false
-// 	}
+// func _httpDebugRequest(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		_httpDumpRequest(r, false, false)
+// 		next.ServeHTTP(w, r)
+// 	})
 // }
 
-func httpLogAndError(w http.ResponseWriter, _ *http.Request, msg string, statusCode ...int) {
+// func _httpDumpRequest(r *http.Request, readHeaders bool, readJsonBody bool) {
+
+// 	fmt.Printf("\n=== %s %s ===\n", r.Method, r.URL)
+
+// 	routeCtx := chi.RouteContext(r.Context())
+// 	if routeCtx != nil {
+// 		fmt.Println("Path params:")
+// 		for i, key := range routeCtx.URLParams.Keys {
+// 			fmt.Printf("  %s = %s\n", key, routeCtx.URLParams.Values[i])
+// 		}
+// 	}
+
+// 	fmt.Println("Query params:")
+// 	for key, values := range r.URL.Query() {
+// 		fmt.Printf("  %s = %v\n", key, values)
+// 	}
+
+// 	if err := r.ParseForm(); err == nil {
+// 		fmt.Println("Form values:")
+// 		for key, values := range r.PostForm {
+// 			fmt.Printf("  %s = %v\n", key, values)
+// 		}
+// 	}
+
+// 	if readHeaders {
+// 		fmt.Println("Headers:")
+// 		for key, values := range r.Header {
+// 			fmt.Printf("  %s = %v\n", key, values)
+// 		}
+// 	}
+
+// 	if readJsonBody {
+// 		fmt.Println("JSON body:")
+// 		body, _ := io.ReadAll(r.Body)
+// 		fmt.Println(string(body))
+// 		r.Body = io.NopCloser(bytes.NewBuffer(body))
+// 	}
+
+// }
+
+func _httpLogAndError(w http.ResponseWriter, _ *http.Request, msg string, statusCode ...int) {
 	status := 500
 	if len(statusCode) > 0 {
 		status = statusCode[0]
@@ -147,3 +95,53 @@ func httpLogAndError(w http.ResponseWriter, _ *http.Request, msg string, statusC
 	w.WriteHeader(status)
 	// ErrorPageTemplate().Render(r.Context(), w)
 }
+
+func httpRequireNonZeroInt64(value string, key string, w http.ResponseWriter, r *http.Request) (int64, bool) {
+	v, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		_httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
+		return 0, false
+	}
+
+	if v == 0 {
+		_httpLogAndError(
+			w,
+			r,
+			fmt.Sprintf("key '%s' must be a non-zero integer", key),
+			http.StatusBadRequest,
+		)
+		return 0, false
+	}
+
+	return v, true
+}
+
+func _httpRequireIDParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
+	return httpRequireNonZeroInt64(chi.URLParam(r, key), key, w, r)
+}
+
+// func _httpRequireInt64Param(value string, w http.ResponseWriter, r *http.Request) (int64, bool) {
+// 	v, err := strconv.ParseInt(value, 10, 64)
+// 	if err != nil {
+// 		_httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
+// 		return 0, false
+// 	}
+
+// 	return v, true
+// }
+
+// func _httpRequireNumericParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
+// 	return _httpRequireInt64Param(chi.URLParam(r, key), w, r)
+// }
+
+// func requirePageType(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
+// 	pt := r.PathValue(key)
+
+// 	switch pt {
+// 	case PageTypeFeed, PageTypeHome, PageTypeArticle:
+// 		return pt, true
+// 	default:
+// 		logAndError(w, r, fmt.Errorf("invalid page type: %s", pt).Error())
+// 		return "", false
+// 	}
+// }

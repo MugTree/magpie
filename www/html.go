@@ -1,7 +1,11 @@
 package www
 
 import (
+	"fmt"
+
+	"github.com/mugtree/magpie/db"
 	. "maragu.dev/gomponents"
+	ds "maragu.dev/gomponents-datastar"
 	. "maragu.dev/gomponents/components"
 	. "maragu.dev/gomponents/html"
 )
@@ -26,4 +30,35 @@ func layout(props pageProps, children ...Node) Node {
 		Body: Group(children),
 	})
 
+}
+
+func articlePage(article db.Article, html string, sigs map[string]any) Node {
+
+	return Main(
+		ID("article"),
+		Class(`article`),
+		ds.Signals(sigs),
+
+		// server rendered HTML
+		htmlLayout(html),
+
+		// markdown
+		Div(ID("markdown"),
+			Textarea(ID("editor"),
+				ds.Bind("edit"),
+				ds.On("input", fmt.Sprintf("@get('/article/%v/write')", article.ID)),
+				Text(article.Markdown),
+			),
+			Button(
+				ds.On("click", fmt.Sprintf("@patch('/article/%v/save')", article.ID)),
+				Text("submit"),
+			),
+		),
+	)
+}
+
+func htmlLayout(html string) Node {
+	return Div(ID("html"),
+		Raw(html),
+	)
 }

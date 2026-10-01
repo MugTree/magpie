@@ -21,8 +21,8 @@ INSERT OR IGNORE INTO articles (
 	 ? 
  );
 
--- name: UpdateArticleByID :exec
-UPDATE articles SET markdown = ? WHERE id = ?;
+-- name: UpdateArticleByID :one
+UPDATE articles SET markdown = ? WHERE id = ? RETURNING *;
 
 -- name: SelectArticleByFeedIDAndLink :one
 SELECT * FROM articles WHERE feed_id = ? AND link = ?;
