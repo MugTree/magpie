@@ -7,11 +7,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	// "github.com/goforj/godump"
+
+	. "maragu.dev/gomponents"
+	. "maragu.dev/gomponents/html"
 )
 
 func getRouter(queries *db.Queries) chi.Router {
 	r := chi.NewRouter()
-	r.Use(httpDebugRequest)
+	// r.Use(httpDebugRequest)
 	r.Handle("/public/*", httpNeuterDirectory(http.FileServer(http.FS(staticFS))))
 
 	r.Get("/", homeHandler(queries))
@@ -24,7 +27,7 @@ func getRouter(queries *db.Queries) chi.Router {
 func homeHandler(_ *db.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		w.Write([]byte("home"))
+		layout(pageProps{Title: "Home"}, Div(Text("Home!"))).Render(w)
 	}
 }
 

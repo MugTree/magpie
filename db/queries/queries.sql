@@ -9,12 +9,14 @@ INSERT OR IGNORE INTO articles (
 	date_found,
 	summary,
 	scraped_html,
-	article_content 
+	formatted_html,
+	markdown 
 ) VALUES (
 	 ?, 
 	 ?, 
 	 ?, 
 	 ?,
+	 ?, 
 	 ?, 
 	 ?, 
 	 ?, 

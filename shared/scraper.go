@@ -118,14 +118,14 @@ func InsertOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofee
 	// create the markdown here ...
 
 	err = queries.InsertOrIgnoreArticle(ctx, db.InsertOrIgnoreArticleParams{
-		FeedID:         feed.ID,
-		Title:          item.Title,
-		Link:           item.Link,
-		Published:      publishedDate,
-		DateFound:      &dateFound,
-		Summary:        item.Description,
-		ScrapedHtml:    html,
-		ArticleContent: processed,
+		FeedID:        feed.ID,
+		Title:         item.Title,
+		Link:          item.Link,
+		Published:     publishedDate,
+		DateFound:     &dateFound,
+		Summary:       item.Description,
+		ScrapedHtml:   html,
+		FormattedHtml: processed,
 	})
 	if err != nil {
 		return article, fmt.Errorf("error inserting article: %v", err)
@@ -167,7 +167,7 @@ func CreateMarkdown(article db.Article, feed db.Feed, markdownPath string) error
 	}
 	defer f.Close()
 
-	content, err := htmltomarkdown.ConvertString(article.ArticleContent)
+	content, err := htmltomarkdown.ConvertString(article.FormattedHtml)
 	if err != nil {
 		return err
 	}

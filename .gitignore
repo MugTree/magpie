@@ -9,3 +9,4 @@ magpie.db
 magpie.db-*
 data/seed/urls.txt
 annotations
+scripts

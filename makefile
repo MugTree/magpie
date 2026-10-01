@@ -1,19 +1,20 @@
 drop-data:
 	rm magpie.db
 	rm magpie.db-*
-	rm ./annotations/*
 
 seed-data:
 	touch magpie.db
 	goose status
 	goose up
-	go run ./db/seed/generate.go --urls=./db/seed/seed.csv --db=./magpie.db
+	go run ./cmd/seed/main.go --urls=./cmd/seed/seed.csv --db=./magpie.db
 
 lint:
 	golangci-lint run .
 
 dev: 
 	air
+
+
 
 debug:
 	go build -gcflags="all=-N -l" -o ./tmp/server .

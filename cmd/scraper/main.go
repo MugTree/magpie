@@ -35,6 +35,7 @@ func main() {
 
 	queries := db.New(sqlDB)
 
+	// this is shared by the seed
 	newArticles, err := shared.InsertFeedUpdates(queries, ctx, markdownPath)
 	if err != nil {
 		shared.LogError(err)

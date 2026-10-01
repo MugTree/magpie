@@ -76,7 +76,8 @@ INSERT OR IGNORE INTO articles (
 	date_found,
 	summary,
 	scraped_html,
-	article_content 
+	formatted_html,
+	markdown 
 ) VALUES (
 	 ?, 
 	 ?, 
@@ -85,19 +86,21 @@ INSERT OR IGNORE INTO articles (
 	 ?, 
 	 ?, 
 	 ?, 
+	 ?, 
 	 ?
  )
 `
 
 type InsertOrIgnoreArticleParams struct {
-	FeedID         int64
-	Title          string
-	Link           string
-	Published      *time.Time
-	DateFound      *time.Time
-	Summary        string
-	ScrapedHtml    string
-	ArticleContent string
+	FeedID        int64
+	Title         string
+	Link          string
+	Published     *time.Time
+	DateFound     *time.Time
+	Summary       string
+	ScrapedHtml   string
+	FormattedHtml string
+	Markdown      string
 }
 
 func (q *Queries) InsertOrIgnoreArticle(ctx context.Context, arg InsertOrIgnoreArticleParams) error {
@@ -109,7 +112,8 @@ func (q *Queries) InsertOrIgnoreArticle(ctx context.Context, arg InsertOrIgnoreA
 		arg.DateFound,
 		arg.Summary,
 		arg.ScrapedHtml,
-		arg.ArticleContent,
+		arg.FormattedHtml,
+		arg.Markdown,
 	)
 	return err
 }
@@ -181,7 +185,7 @@ func (q *Queries) SelectAllFeeds(ctx context.Context) ([]Feed, error) {
 }
 
 const selectArticleByFeedIDAndLink = `-- name: SelectArticleByFeedIDAndLink :one
-SELECT id, feed_id, title, link, published, date_found, article_content, scraped_html, summary FROM articles WHERE feed_id = ? AND link = ?
+SELECT id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary FROM articles WHERE feed_id = ? AND link = ?
 `
 
 type SelectArticleByFeedIDAndLinkParams struct {
@@ -199,8 +203,9 @@ func (q *Queries) SelectArticleByFeedIDAndLink(ctx context.Context, arg SelectAr
 		&i.Link,
 		&i.Published,
 		&i.DateFound,
-		&i.ArticleContent,
 		&i.ScrapedHtml,
+		&i.Markdown,
+		&i.FormattedHtml,
 		&i.Summary,
 	)
 	return i, err

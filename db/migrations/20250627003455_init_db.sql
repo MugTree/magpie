@@ -22,8 +22,9 @@ CREATE TABLE IF NOT EXISTS articles
     link      TEXT NOT NULL DEFAULT '',
     published DATETIME NULL,
     date_found DATETIME NULL,
-    article_content      TEXT NOT NULL DEFAULT '',
-    scraped_html    TEXT NOT NULL DEFAULT '',
+    scraped_html      TEXT NOT NULL DEFAULT '',
+    markdown      TEXT NOT NULL DEFAULT '',
+    formatted_html    TEXT NOT NULL DEFAULT '',
     summary   TEXT NOT NULL DEFAULT '',
     UNIQUE (feed_id, link),
     FOREIGN KEY (feed_id) REFERENCES feeds (id) ON DELETE CASCADE

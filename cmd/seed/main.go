@@ -20,7 +20,7 @@ import (
 )
 
 /*
-go run ./main.go --urls=./app/db/seed/seed.csv --db=./feeds.db
+go run ./cmd/seed/main.go --urls=./cmd/seed/seed.csv --db=./magpie.db
 */
 func main() {
 

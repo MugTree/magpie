@@ -9,15 +9,16 @@ import (
 )
 
 type Article struct {
-	ID             int64
-	FeedID         int64
-	Title          string
-	Link           string
-	Published      *time.Time
-	DateFound      *time.Time
-	ArticleContent string
-	ScrapedHtml    string
-	Summary        string
+	ID            int64
+	FeedID        int64
+	Title         string
+	Link          string
+	Published     *time.Time
+	DateFound     *time.Time
+	ScrapedHtml   string
+	Markdown      string
+	FormattedHtml string
+	Summary       string
 }
 
 type Feed struct {
