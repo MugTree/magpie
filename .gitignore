@@ -7,6 +7,5 @@ __debug_*
 node_modules
 magpie.db
 magpie.db-*
-data/seed/urls.txt
-annotations
+cmd/seed/seed.csv
 scripts

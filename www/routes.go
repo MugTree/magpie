@@ -16,14 +16,18 @@ func getRouter(queries *db.Queries) chi.Router {
 	// r.Use(httpDebugRequest)
 	r.Handle("/public/*", _httpNeuterDirectory(http.FileServer(http.FS(staticFS))))
 
+	// need to list feeds and articles
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("NOT IMPL"))
 
 	})
+
+	// not sure I need this as will all be on hp maybe add later
 	r.Get("/feed/{id}", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("NOT IMPL"))
 
 	})
+
 	r.Route("/article/{id}", func(r chi.Router) {
 
 		r.Get("/read", func(w http.ResponseWriter, r *http.Request) {
