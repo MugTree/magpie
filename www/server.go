@@ -1,8 +1,10 @@
 package www
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
+	"io"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -35,52 +37,44 @@ func _httpNeuterDirectory(next http.Handler) http.Handler {
 	})
 }
 
-// func _httpDebugRequest(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		_httpDumpRequest(r, false, false)
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
+func _httpDebugRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_httpDumpRequest(r, false, false)
+		next.ServeHTTP(w, r)
+	})
+}
 
-// func _httpDumpRequest(r *http.Request, readHeaders bool, readJsonBody bool) {
+func _httpDumpRequest(r *http.Request, readHeaders bool, readJsonBody bool) {
 
-// 	fmt.Printf("\n=== %s %s ===\n", r.Method, r.URL)
+	fmt.Printf("\n=== %s %s ===\n", r.Method, r.URL)
 
-// 	routeCtx := chi.RouteContext(r.Context())
-// 	if routeCtx != nil {
-// 		fmt.Println("Path params:")
-// 		for i, key := range routeCtx.URLParams.Keys {
-// 			fmt.Printf("  %s = %s\n", key, routeCtx.URLParams.Values[i])
-// 		}
-// 	}
+	fmt.Println("Query params:")
+	for key, values := range r.URL.Query() {
+		fmt.Printf("  %s = %v\n", key, values)
+	}
 
-// 	fmt.Println("Query params:")
-// 	for key, values := range r.URL.Query() {
-// 		fmt.Printf("  %s = %v\n", key, values)
-// 	}
+	if err := r.ParseForm(); err == nil {
+		fmt.Println("Form values:")
+		for key, values := range r.PostForm {
+			fmt.Printf("  %s = %v\n", key, values)
+		}
+	}
 
-// 	if err := r.ParseForm(); err == nil {
-// 		fmt.Println("Form values:")
-// 		for key, values := range r.PostForm {
-// 			fmt.Printf("  %s = %v\n", key, values)
-// 		}
-// 	}
+	if readHeaders {
+		fmt.Println("Headers:")
+		for key, values := range r.Header {
+			fmt.Printf("  %s = %v\n", key, values)
+		}
+	}
 
-// 	if readHeaders {
-// 		fmt.Println("Headers:")
-// 		for key, values := range r.Header {
-// 			fmt.Printf("  %s = %v\n", key, values)
-// 		}
-// 	}
+	if readJsonBody {
+		fmt.Println("JSON body:")
+		body, _ := io.ReadAll(r.Body)
+		fmt.Println(string(body))
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+	}
 
-// 	if readJsonBody {
-// 		fmt.Println("JSON body:")
-// 		body, _ := io.ReadAll(r.Body)
-// 		fmt.Println(string(body))
-// 		r.Body = io.NopCloser(bytes.NewBuffer(body))
-// 	}
-
-// }
+}
 
 func _httpLogAndError(w http.ResponseWriter, _ *http.Request, msg string, statusCode ...int) {
 	status := 500

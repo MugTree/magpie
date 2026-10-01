@@ -34,30 +34,34 @@ func layout(props pageProps, children ...Node) Node {
 
 func articlePage(article db.Article, html string, sigs map[string]any) Node {
 
-	return Main(
-		ID("article"),
-		Class(`article`),
-		ds.Signals(sigs),
-
-		// stars
+	return Div(
+		H1(Text(article.Title)),
+		P(Text(fmt.Sprint(article.Link, " ", article.Published))),
 		articleLike(article.ID, article.Starred),
+		Hr(),
+		Main(
+			ID("article"),
+			Class(`article`),
+			ds.Signals(sigs),
 
-		// server rendered HTML
-		authorHTML(html),
+			// stars
 
-		// markdown
-		Div(ID("markdown"),
-			Textarea(ID("editor"),
-				ds.Bind("edit"),
-				ds.On("input", fmt.Sprintf("@get('/article/%v/write')", article.ID)),
-				Text(article.Markdown),
+			// server rendered HTML
+			authorHTML(html),
+
+			// markdown
+			Div(ID("markdown"),
+				Textarea(ID("editor"),
+					ds.Bind("edit"),
+					ds.On("input", fmt.Sprintf("@get('/article/%v/write')", article.ID)),
+					Text(article.Markdown),
+				),
+				Button(
+					ds.On("click", fmt.Sprintf("@patch('/article/%v/save')", article.ID)),
+					Text("submit"),
+				),
 			),
-			Button(
-				ds.On("click", fmt.Sprintf("@patch('/article/%v/save')", article.ID)),
-				Text("submit"),
-			),
-		),
-	)
+		))
 }
 
 func authorHTML(html string) Node {

@@ -15,7 +15,7 @@ import (
 
 func getRouter(queries *db.Queries) chi.Router {
 	r := chi.NewRouter()
-	// r.Use(httpDebugRequest)
+	r.Use(_httpDebugRequest)
 	r.Handle("/public/*", _httpNeuterDirectory(http.FileServer(http.FS(staticFS))))
 
 	// need to list feeds and articles
@@ -95,16 +95,16 @@ func getRouter(queries *db.Queries) chi.Router {
 
 			likeValue, err := strconv.Atoi(r.PathValue("value"))
 			if err != nil {
-				_httpLogAndError(w, r, err.Error())
+				_httpLogAndError(w, r, fmt.Sprintf("incorrect like value: %v, needs to be int", likeValue))
 				return
 			}
 
-			if likeValue < 0 && likeValue > 3 {
+			if likeValue < 0 || likeValue > 3 {
 				_httpLogAndError(w, r, fmt.Sprintf("incorrect like value: %v, needs to be between 0 and 3", likeValue))
 				return
 			}
 
-			articleLike, err := buildArticleLike(ctx, queries, int64(likeValue), articleID)
+			articleLike, err := updateArticleLike(ctx, queries, int64(likeValue), articleID)
 			if err != nil {
 				_httpLogAndError(w, r, err.Error())
 				return

@@ -63,7 +63,7 @@ func notateArticlePage(as articleSignals) Node {
 	return authorHTML(note)
 }
 
-func buildArticleLike(ctx context.Context, queries *db.Queries, starredValue int64, articleID int64) (Node, error) {
+func updateArticleLike(ctx context.Context, queries *db.Queries, starredValue int64, articleID int64) (Node, error) {
 
 	updatedValue := func(currentValue int64) int64 {
 		if currentValue == 3 {
