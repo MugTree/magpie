@@ -113,7 +113,8 @@ func main() {
 					return
 				}
 
-				if err := queries.UpdateArticleByID(ctx, db.UpdateArticleByIDParams{ID: article.ID, Markdown: md}); err != nil {
+				_, err = queries.UpdateArticleByID(ctx, db.UpdateArticleByIDParams{ID: article.ID, Markdown: md})
+				if err != nil {
 					shared.LogError(err)
 					return
 				}

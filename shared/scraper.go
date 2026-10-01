@@ -55,7 +55,9 @@ func InsertFeedUpdates(queries *db.Queries, ctx context.Context, markdownPath st
 					return 0, fmt.Errorf("error creating markdown for %s: %w", article.Title, err)
 				}
 
-				if err := queries.UpdateArticleByID(ctx, db.UpdateArticleByIDParams{ID: article.ID, Markdown: md}); err != nil {
+				_, err = queries.UpdateArticleByID(ctx, db.UpdateArticleByIDParams{ID: article.ID, Markdown: md})
+
+				if err != nil {
 					return 0, fmt.Errorf("error updating article %s: %w", article.Title, err)
 				}
 
