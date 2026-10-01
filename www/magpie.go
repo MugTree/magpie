@@ -60,5 +60,26 @@ func updateArticlePage(ctx context.Context, queries *db.Queries, as articleSigna
 
 func notateArticlePage(as articleSignals) Node {
 	note := string(blackfriday.Run([]byte(as.Edit)))
-	return htmlLayout(note)
+	return authorHTML(note)
+}
+
+func buildArticleLike(ctx context.Context, queries *db.Queries, starredValue int64, articleID int64) (Node, error) {
+
+	updatedValue := func(currentValue int64) int64 {
+		if currentValue == 3 {
+			return 0
+		}
+		return currentValue + 1
+	}(starredValue)
+
+	article, err := queries.UpdateArticleSetStarredValue(ctx,
+		db.UpdateArticleSetStarredValueParams{
+			Starred: int64(updatedValue),
+			ID:      articleID},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return articleLike(articleID, article.Starred), nil
 }

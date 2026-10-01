@@ -181,7 +181,7 @@ func (q *Queries) SelectAllFeeds(ctx context.Context) ([]Feed, error) {
 }
 
 const selectArticleByFeedIDAndLink = `-- name: SelectArticleByFeedIDAndLink :one
-SELECT id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary FROM articles WHERE feed_id = ? AND link = ?
+SELECT id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary, read, starred FROM articles WHERE feed_id = ? AND link = ?
 `
 
 type SelectArticleByFeedIDAndLinkParams struct {
@@ -203,12 +203,14 @@ func (q *Queries) SelectArticleByFeedIDAndLink(ctx context.Context, arg SelectAr
 		&i.Markdown,
 		&i.FormattedHtml,
 		&i.Summary,
+		&i.Read,
+		&i.Starred,
 	)
 	return i, err
 }
 
 const selectArticleByID = `-- name: SelectArticleByID :one
-SELECT id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary FROM articles WHERE id = ?
+SELECT id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary, read, starred FROM articles WHERE id = ?
 `
 
 func (q *Queries) SelectArticleByID(ctx context.Context, id int64) (Article, error) {
@@ -225,12 +227,14 @@ func (q *Queries) SelectArticleByID(ctx context.Context, id int64) (Article, err
 		&i.Markdown,
 		&i.FormattedHtml,
 		&i.Summary,
+		&i.Read,
+		&i.Starred,
 	)
 	return i, err
 }
 
 const updateArticleByID = `-- name: UpdateArticleByID :one
-UPDATE articles SET markdown = ? WHERE id = ? RETURNING id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary
+UPDATE articles SET markdown = ? WHERE id = ? RETURNING id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary, read, starred
 `
 
 type UpdateArticleByIDParams struct {
@@ -252,6 +256,37 @@ func (q *Queries) UpdateArticleByID(ctx context.Context, arg UpdateArticleByIDPa
 		&i.Markdown,
 		&i.FormattedHtml,
 		&i.Summary,
+		&i.Read,
+		&i.Starred,
+	)
+	return i, err
+}
+
+const updateArticleSetStarredValue = `-- name: UpdateArticleSetStarredValue :one
+UPDATE articles SET starred = ? WHERE id = ? RETURNING id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary, read, starred
+`
+
+type UpdateArticleSetStarredValueParams struct {
+	Starred int64
+	ID      int64
+}
+
+func (q *Queries) UpdateArticleSetStarredValue(ctx context.Context, arg UpdateArticleSetStarredValueParams) (Article, error) {
+	row := q.db.QueryRowContext(ctx, updateArticleSetStarredValue, arg.Starred, arg.ID)
+	var i Article
+	err := row.Scan(
+		&i.ID,
+		&i.FeedID,
+		&i.Title,
+		&i.Link,
+		&i.Published,
+		&i.DateFound,
+		&i.ScrapedHtml,
+		&i.Markdown,
+		&i.FormattedHtml,
+		&i.Summary,
+		&i.Read,
+		&i.Starred,
 	)
 	return i, err
 }

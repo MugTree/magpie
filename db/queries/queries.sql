@@ -64,3 +64,6 @@ INSERT INTO log (
 	?, 
 	CURRENT_TIMESTAMP
 ) RETURNING *;
+
+-- name: UpdateArticleSetStarredValue :one
+UPDATE articles SET starred = ? WHERE id = ? RETURNING *;

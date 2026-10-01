@@ -1,7 +1,9 @@
 package www
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/goforj/godump"
 	"github.com/mugtree/magpie/db"
@@ -80,6 +82,37 @@ func getRouter(queries *db.Queries) chi.Router {
 			sse := datastar.NewSSE(w, r)
 			sse.PatchElementGostar(updatedPage)
 			sse.MarshalAndPatchSignals(updatedSignals)
+		})
+
+		r.Put("/like/{value}", func(w http.ResponseWriter, r *http.Request) {
+
+			ctx := r.Context()
+
+			articleID, ok := _httpRequireIDParam(w, r, "id")
+			if !ok {
+				return
+			}
+
+			likeValue, err := strconv.Atoi(r.PathValue("value"))
+			if err != nil {
+				_httpLogAndError(w, r, err.Error())
+				return
+			}
+
+			if likeValue < 0 && likeValue > 3 {
+				_httpLogAndError(w, r, fmt.Sprintf("incorrect like value: %v, needs to be between 0 and 3", likeValue))
+				return
+			}
+
+			articleLike, err := buildArticleLike(ctx, queries, int64(likeValue), articleID)
+			if err != nil {
+				_httpLogAndError(w, r, err.Error())
+				return
+			}
+
+			sse := datastar.NewSSE(w, r)
+			sse.PatchElementGostar(articleLike)
+
 		})
 
 	})

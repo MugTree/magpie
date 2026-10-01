@@ -15,6 +15,7 @@ import (
 
 //go:embed public/css/*.css
 //go:embed public/js/*.js
+//go:embed public/img/*
 var staticFS embed.FS
 
 func SetupHTTPServer(queries *db.Queries, user string, password string) chi.Router {

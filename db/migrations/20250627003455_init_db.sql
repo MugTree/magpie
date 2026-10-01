@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS articles
     markdown      TEXT NOT NULL DEFAULT '',
     formatted_html    TEXT NOT NULL DEFAULT '',
     summary   TEXT NOT NULL DEFAULT '',
+    read      INTEGER NOT NULL DEFAULT 0,
+    starred   INTEGER NOT NULL DEFAULT 0,
     UNIQUE (feed_id, link),
     FOREIGN KEY (feed_id) REFERENCES feeds (id) ON DELETE CASCADE
 );

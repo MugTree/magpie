@@ -19,6 +19,8 @@ type Article struct {
 	Markdown      string
 	FormattedHtml string
 	Summary       string
+	Read          int64
+	Starred       int64
 }
 
 type Feed struct {
