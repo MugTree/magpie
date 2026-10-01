@@ -5,10 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/mugtree/magpie/db"
@@ -45,8 +41,6 @@ func InsertFeedUpdates(queries *db.Queries, ctx context.Context, markdownPath st
 			continue
 		}
 
-		markdownPath := filepath.Join(markdownPath, feed.FolderName)
-
 		for _, v := range goFeed.Items {
 
 			article, err := InsertOrIgnoreArticle(queries, ctx, v, feed)
@@ -56,9 +50,13 @@ func InsertFeedUpdates(queries *db.Queries, ctx context.Context, markdownPath st
 
 			if article.ID != 0 {
 
-				err := CreateMarkdown(article, feed, markdownPath)
+				md, err := CreateMarkdown(article)
 				if err != nil {
-					return 0, fmt.Errorf("parse feed %s: %w", feed.Url, err)
+					return 0, fmt.Errorf("error creating markdown for %s: %w", article.Title, err)
+				}
+
+				if err := queries.UpdateArticleByID(ctx, db.UpdateArticleByIDParams{ID: article.ID, Markdown: md}); err != nil {
+					return 0, fmt.Errorf("error updating article %s: %w", article.Title, err)
 				}
 
 				createdArticlesTally = createdArticlesTally + 1
@@ -148,50 +146,9 @@ func InsertOrIgnoreArticle(queries *db.Queries, ctx context.Context, item *gofee
 
 }
 
-func CreateMarkdown(article db.Article, feed db.Feed, markdownPath string) error {
+func CreateMarkdown(article db.Article) (string, error) {
 
-	slug := func(s string) string {
-		s = strings.ToLower(s)
-		re := regexp.MustCompile(`[^a-z0-9]+`)
-		s = re.ReplaceAllString(s, "-")
-		return strings.Trim(s, "-")
-	}
-
-	date := article.DateFound.Format("2006-01-02")
-
-	fileName := date + "-" + slug(article.Title) + ".md"
-
-	f, err := os.Create(filepath.Join(markdownPath, fileName))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	content, err := htmltomarkdown.ConvertString(article.FormattedHtml)
-	if err != nil {
-		return err
-	}
-
-	tags, err := htmltomarkdown.ConvertString(fmt.Sprintf(`<p>#annotations #%v</p>`, strings.ReplaceAll(feed.FolderName, "_", "")))
-	if err != nil {
-		return err
-	}
-
-	link, err := htmltomarkdown.ConvertString(fmt.Sprintf(`<p><a href="%v">%v</a> | %v</p>`, feed.Url, feed.Title, date))
-	if err != nil {
-		return err
-	}
-
-	content = fmt.Sprintf("\n\n%v\n\n## %v\n\n%v\n\n%v", tags, article.Title, link, content)
-
-	_, err = f.Write([]byte(content))
-
-	if err != nil {
-		LogError(err)
-		return err
-	}
-
-	return nil
+	return htmltomarkdown.ConvertString(article.FormattedHtml)
 
 }
 

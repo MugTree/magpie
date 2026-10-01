@@ -5,8 +5,7 @@
 # Todo
 
 - check for bug in importer procedure
-
--
+- get markdown into the database
 
 # Done
 

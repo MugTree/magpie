@@ -6,9 +6,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/mmcdole/gofeed"
@@ -25,16 +23,6 @@ go run ./cmd/seed/main.go --urls=./cmd/seed/seed.csv --db=./magpie.db
 func main() {
 
 	ctx := context.Background()
-
-	mustEnv := func(key string) string {
-		val, ok := os.LookupEnv(key)
-		if !ok {
-			log.Fatalf("missing .env: %s", key)
-		}
-		return val
-	}
-
-	markdownDir := mustEnv("MARKDOWN_DIR")
 
 	// parse flags
 	filePtr := flag.String("urls", "", "the file to get the urls from - needs to be broken over lines")
@@ -108,13 +96,6 @@ func main() {
 			return
 		}
 
-		markdownPath := filepath.Join(markdownDir, d.FolderName)
-		err = os.MkdirAll(markdownPath, 0755)
-		if err != nil {
-			shared.LogError(err)
-			return
-		}
-
 		var createdArticlesTally = 0
 
 		for _, v := range goFeed.Items {
@@ -126,8 +107,13 @@ func main() {
 
 			if article.ID != 0 {
 
-				err := shared.CreateMarkdown(article, feed, markdownPath)
+				md, err := shared.CreateMarkdown(article)
 				if err != nil {
+					shared.LogError(err)
+					return
+				}
+
+				if err := queries.UpdateArticleByID(ctx, db.UpdateArticleByIDParams{ID: article.ID, Markdown: md}); err != nil {
 					shared.LogError(err)
 					return
 				}

@@ -76,8 +76,7 @@ INSERT OR IGNORE INTO articles (
 	date_found,
 	summary,
 	scraped_html,
-	formatted_html,
-	markdown 
+	formatted_html
 ) VALUES (
 	 ?, 
 	 ?, 
@@ -86,8 +85,7 @@ INSERT OR IGNORE INTO articles (
 	 ?, 
 	 ?, 
 	 ?, 
-	 ?, 
-	 ?
+	 ? 
  )
 `
 
@@ -100,7 +98,6 @@ type InsertOrIgnoreArticleParams struct {
 	Summary       string
 	ScrapedHtml   string
 	FormattedHtml string
-	Markdown      string
 }
 
 func (q *Queries) InsertOrIgnoreArticle(ctx context.Context, arg InsertOrIgnoreArticleParams) error {
@@ -113,7 +110,6 @@ func (q *Queries) InsertOrIgnoreArticle(ctx context.Context, arg InsertOrIgnoreA
 		arg.Summary,
 		arg.ScrapedHtml,
 		arg.FormattedHtml,
-		arg.Markdown,
 	)
 	return err
 }
@@ -209,4 +205,18 @@ func (q *Queries) SelectArticleByFeedIDAndLink(ctx context.Context, arg SelectAr
 		&i.Summary,
 	)
 	return i, err
+}
+
+const updateArticleByID = `-- name: UpdateArticleByID :exec
+UPDATE articles SET markdown = ? WHERE id = ?
+`
+
+type UpdateArticleByIDParams struct {
+	Markdown string
+	ID       int64
+}
+
+func (q *Queries) UpdateArticleByID(ctx context.Context, arg UpdateArticleByIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateArticleByID, arg.Markdown, arg.ID)
+	return err
 }

@@ -9,8 +9,7 @@ INSERT OR IGNORE INTO articles (
 	date_found,
 	summary,
 	scraped_html,
-	formatted_html,
-	markdown 
+	formatted_html
 ) VALUES (
 	 ?, 
 	 ?, 
@@ -19,9 +18,11 @@ INSERT OR IGNORE INTO articles (
 	 ?, 
 	 ?, 
 	 ?, 
-	 ?, 
-	 ?
+	 ? 
  );
+
+-- name: UpdateArticleByID :exec
+UPDATE articles SET markdown = ? WHERE id = ?;
 
 -- name: SelectArticleByFeedIDAndLink :one
 SELECT * FROM articles WHERE feed_id = ? AND link = ?;
