@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/mugtree/magpie/db"
@@ -82,43 +83,43 @@ func httpDumpRequest(r *http.Request, readHeaders bool, readJsonBody bool) {
 
 }
 
-// func httpRequireNonZeroInt64(value string, key string, w http.ResponseWriter, r *http.Request) (int64, bool) {
-// 	v, err := strconv.ParseInt(value, 10, 64)
-// 	if err != nil {
-// 		httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
-// 		return 0, false
-// 	}
+func httpRequireNonZeroInt64(value string, key string, w http.ResponseWriter, r *http.Request) (int64, bool) {
+	v, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
+		return 0, false
+	}
 
-// 	if v == 0 {
-// 		httpLogAndError(
-// 			w,
-// 			r,
-// 			fmt.Sprintf("key '%s' must be a non-zero integer", key),
-// 			http.StatusBadRequest,
-// 		)
-// 		return 0, false
-// 	}
+	if v == 0 {
+		httpLogAndError(
+			w,
+			r,
+			fmt.Sprintf("key '%s' must be a non-zero integer", key),
+			http.StatusBadRequest,
+		)
+		return 0, false
+	}
 
-// 	return v, true
-// }
+	return v, true
+}
 
-// func httpRequireInt64Param(value string, w http.ResponseWriter, r *http.Request) (int64, bool) {
-// 	v, err := strconv.ParseInt(value, 10, 64)
-// 	if err != nil {
-// 		httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
-// 		return 0, false
-// 	}
+func httpRequireInt64Param(value string, w http.ResponseWriter, r *http.Request) (int64, bool) {
+	v, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		httpLogAndError(w, r, err.Error(), http.StatusBadRequest)
+		return 0, false
+	}
 
-// 	return v, true
-// }
+	return v, true
+}
 
-// func httpRequireIDParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
-// 	return httpRequireNonZeroInt64(chi.URLParam(r, key), key, w, r)
-// }
+func httpRequireIDParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
+	return httpRequireNonZeroInt64(chi.URLParam(r, key), key, w, r)
+}
 
-// func httpRequireNumericParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
-// 	return httpRequireInt64Param(chi.URLParam(r, key), w, r)
-// }
+func httpRequireNumericParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
+	return httpRequireInt64Param(chi.URLParam(r, key), w, r)
+}
 
 // func requirePageType(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
 // 	pt := r.PathValue(key)

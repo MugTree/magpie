@@ -207,6 +207,28 @@ func (q *Queries) SelectArticleByFeedIDAndLink(ctx context.Context, arg SelectAr
 	return i, err
 }
 
+const selectArticleByID = `-- name: SelectArticleByID :one
+SELECT id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary FROM articles WHERE id = ?
+`
+
+func (q *Queries) SelectArticleByID(ctx context.Context, id int64) (Article, error) {
+	row := q.db.QueryRowContext(ctx, selectArticleByID, id)
+	var i Article
+	err := row.Scan(
+		&i.ID,
+		&i.FeedID,
+		&i.Title,
+		&i.Link,
+		&i.Published,
+		&i.DateFound,
+		&i.ScrapedHtml,
+		&i.Markdown,
+		&i.FormattedHtml,
+		&i.Summary,
+	)
+	return i, err
+}
+
 const updateArticleByID = `-- name: UpdateArticleByID :exec
 UPDATE articles SET markdown = ? WHERE id = ?
 `

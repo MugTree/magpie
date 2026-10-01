@@ -38,6 +38,7 @@ require (
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
 	github.com/go-chi/chi/v5 v5.3.2
+	github.com/russross/blackfriday/v2 v2.1.0
 	golang.org/x/net v0.58.0
 	maragu.dev/gomponents v1.3.0
 )
