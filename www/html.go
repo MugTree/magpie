@@ -66,6 +66,7 @@ func articlePage(article db.Article, html string, sigs map[string]any) Node {
 
 func authorHTML(html string) Node {
 	return Div(ID("html"),
+		Style("font-size: 6px"),
 		Raw(html),
 	)
 }
