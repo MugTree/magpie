@@ -10,6 +10,16 @@ import (
 	. "maragu.dev/gomponents"
 )
 
+type feedSummary struct {
+	Name          string
+	ArticleCount  int64
+	FeedID        int64
+	PageID        int64
+	LinksRequired int64
+	Articles      []db.SelectArticlesByFeedIDWithLimitRow
+	ShowArticles  bool
+}
+
 type articleSignals struct {
 	Edit      string `json:"edit"`
 	ArticleID int64  `json:"article_id"`

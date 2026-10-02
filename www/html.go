@@ -2,6 +2,7 @@ package www
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/mugtree/magpie/db"
 	. "maragu.dev/gomponents"
@@ -80,4 +81,47 @@ func articleLike(articleID int64, starsValue int64) Node {
 			Src(fmt.Sprintf("/public/img/%v-star.png", starsValue)),
 		),
 	)
+}
+
+func homePage(summaries []feedSummary) Node {
+
+	feedPagination := func(fsm feedSummary) Node {
+		links := []Node{}
+		for i := range fsm.LinksRequired {
+			pageNumber := i + 1
+			links = append(links,
+				A(
+					ds.On("click", fmt.Sprintf("@get('/feed/%v/page/%v')", fsm.FeedID, pageNumber)),
+					Text(strconv.FormatInt(pageNumber, 10)),
+					Classes{"link": true, "underline": fsm.PageID == pageNumber},
+				),
+			)
+		}
+		return Group(links)
+	}
+
+	return Div(ID("homepage"),
+		Div(ID("feeds"),
+			Map(summaries, func(fs feedSummary) Node {
+				return Div(ID(fmt.Sprintf("feed-box-%v", fs.FeedID)),
+					Class("feedbox"),
+					H2(Text(fs.Name), ds.On("click", fmt.Sprintf("@get('/feed/%v/page/1')", fs.FeedID))),
+
+					If(len(fs.Articles) > 0,
+						Div(
+							Map(fs.Articles,
+								func(a db.SelectArticlesByFeedIDWithLimitRow) Node {
+
+									return H3(A(Text(a.ArticleTitle), Href(fmt.Sprintf("/article/%v/read", a.ArticleID))))
+								},
+							),
+							Div(feedPagination(fs)),
+						),
+					),
+				)
+
+			}),
+		),
+	)
+
 }

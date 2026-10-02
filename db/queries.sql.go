@@ -233,6 +233,104 @@ func (q *Queries) SelectArticleByID(ctx context.Context, id int64) (Article, err
 	return i, err
 }
 
+const selectArticleCountByFeedID = `-- name: SelectArticleCountByFeedID :one
+SELECT COUNT(*) FROM articles WHERE feed_id = ?
+`
+
+func (q *Queries) SelectArticleCountByFeedID(ctx context.Context, feedID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, selectArticleCountByFeedID, feedID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const selectArticlesByFeedIDWithLimit = `-- name: SelectArticlesByFeedIDWithLimit :many
+SELECT
+   a.id as article_id,
+	a.link as article_link,
+	a.title as article_title,
+	a.starred as article_stars,
+	a.published as article_published,
+	a.read as article_read,
+	a.feed_id as article_feed_id,
+    f.title as feed_title
+FROM articles a
+    INNER JOIN feeds f ON f.id = a.feed_id
+WHERE a.feed_id  = ?
+ORDER BY published DESC
+LIMIT ? OFFSET ?
+`
+
+type SelectArticlesByFeedIDWithLimitParams struct {
+	FeedID int64
+	Limit  int64
+	Offset int64
+}
+
+type SelectArticlesByFeedIDWithLimitRow struct {
+	ArticleID        int64
+	ArticleLink      string
+	ArticleTitle     string
+	ArticleStars     int64
+	ArticlePublished *time.Time
+	ArticleRead      int64
+	ArticleFeedID    int64
+	FeedTitle        string
+}
+
+func (q *Queries) SelectArticlesByFeedIDWithLimit(ctx context.Context, arg SelectArticlesByFeedIDWithLimitParams) ([]SelectArticlesByFeedIDWithLimitRow, error) {
+	rows, err := q.db.QueryContext(ctx, selectArticlesByFeedIDWithLimit, arg.FeedID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SelectArticlesByFeedIDWithLimitRow
+	for rows.Next() {
+		var i SelectArticlesByFeedIDWithLimitRow
+		if err := rows.Scan(
+			&i.ArticleID,
+			&i.ArticleLink,
+			&i.ArticleTitle,
+			&i.ArticleStars,
+			&i.ArticlePublished,
+			&i.ArticleRead,
+			&i.ArticleFeedID,
+			&i.FeedTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const selectFeedByID = `-- name: SelectFeedByID :one
+SELECT id, url, title, folder_name, last_fetched, css_sel_container, css_sel_start, css_sel_stop, html_extraction_strategy FROM feeds where id = ?
+`
+
+func (q *Queries) SelectFeedByID(ctx context.Context, id int64) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, selectFeedByID, id)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Title,
+		&i.FolderName,
+		&i.LastFetched,
+		&i.CssSelContainer,
+		&i.CssSelStart,
+		&i.CssSelStop,
+		&i.HtmlExtractionStrategy,
+	)
+	return i, err
+}
+
 const updateArticleByID = `-- name: UpdateArticleByID :one
 UPDATE articles SET markdown = ? WHERE id = ? RETURNING id, feed_id, title, link, published, date_found, scraped_html, markdown, formatted_html, summary, read, starred
 `
