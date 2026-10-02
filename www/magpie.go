@@ -3,22 +3,13 @@ package www
 import (
 	"context"
 
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/mugtree/magpie/db"
 	"github.com/mugtree/magpie/lib"
 	"github.com/russross/blackfriday/v2"
 
 	. "maragu.dev/gomponents"
 )
-
-type feedSummary struct {
-	Name          string
-	ArticleCount  int64
-	FeedID        int64
-	PageID        int64
-	LinksRequired int64
-	Articles      []db.SelectArticlesByFeedIDWithLimitRow
-	ShowArticles  bool
-}
 
 type articleSignals struct {
 	Edit      string `json:"edit"`
@@ -40,7 +31,7 @@ func buildArticlePage(ctx context.Context, queries *db.Queries, articleID int64)
 		return nil, db.Article{}, err
 	}
 
-	html := blackfriday.Run([]byte(article.Markdown))
+	html := formatMarkown(article.Markdown)
 
 	return articlePage(article, string(html), sigs), article, nil
 
@@ -57,7 +48,7 @@ func updateArticlePage(ctx context.Context, queries *db.Queries, as articleSigna
 	}
 	as.Saved = true
 
-	html := blackfriday.Run([]byte(article.Markdown))
+	html := formatMarkown(article.Markdown) //blackfriday.Run([]byte(article.Markdown))
 
 	sigs, err := lib.StructToMap(as)
 	if err != nil {
@@ -69,7 +60,7 @@ func updateArticlePage(ctx context.Context, queries *db.Queries, as articleSigna
 }
 
 func notateArticlePage(as articleSignals) Node {
-	note := string(blackfriday.Run([]byte(as.Edit)))
+	note := formatMarkown(as.Edit)
 	return authorHTML(note)
 }
 
@@ -92,4 +83,33 @@ func updateArticleLike(ctx context.Context, queries *db.Queries, starredValue in
 	}
 
 	return articleLike(articleID, article.Starred), nil
+}
+
+func buildHomePage(ctx context.Context, queries *db.Queries) ([]Node, error) {
+
+	articles, err := queries.SelectArticlesWithFeedName(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	articlesMap := map[string][]db.Article{}
+
+	for i, v := range articles {
+		key := articles[i].FeedTitle
+		articlesMap[key] = append(articlesMap[key], db.Article{ID: v.ID, Title: v.Title})
+	}
+
+	boxes := []Node{}
+	for k, v := range articlesMap {
+		boxes = append(boxes, homePageBox(k, v))
+	}
+
+	return boxes, nil
+
+}
+
+// helpers
+func formatMarkown(input string) string {
+	unsafe := blackfriday.Run([]byte(input))
+	return string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 }

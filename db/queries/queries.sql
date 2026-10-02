@@ -89,3 +89,6 @@ SELECT * FROM feeds where id = ?;
 
 -- name: SelectArticleCountByFeedID :one
 SELECT COUNT(*) FROM articles WHERE feed_id = ?;
+
+-- name: SelectArticlesWithFeedName :many
+SELECT a.*, f.title AS feed_title FROM articles a INNER JOIN feeds f ON f.id = a.feed_id;
